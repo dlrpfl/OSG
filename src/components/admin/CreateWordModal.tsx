@@ -3,31 +3,24 @@
 import { X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useWordStore, RecommendedWord } from '@/store/wordStore';
+import WordOption from './WordOption';
 
 interface CreateWordModalProps {
   isOpen: boolean;
   onClose: () => void;
+  words: RecommendedWord[];
 }
-
-const RECOMMENDED_WORDS = [
-  '쓸친소',
-  '갓생',
-  '현타',
-  '존버',
-  '꿀잼',
-  '인싸',
-  '아싸',
-  '갑분싸',
-  '핵인싸',
-  '혼코노',
-];
 
 export default function CreateWordModal({
   isOpen,
   onClose,
+  words,
 }: CreateWordModalProps) {
   const router = useRouter();
-  const [selectedWord, setSelectedWord] = useState<string | null>(null);
+  const [selectedWord, setSelectedWord] = useState<RecommendedWord | null>(
+    null
+  );
 
   if (!isOpen) return null;
 
@@ -49,20 +42,17 @@ export default function CreateWordModal({
 
           {/* Word Grid */}
           <div className="mb-10 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
-            {RECOMMENDED_WORDS.map((word) => (
-              <button
-                key={word}
-                onClick={() =>
-                  setSelectedWord(word === selectedWord ? null : word)
+            {words.map((item) => (
+              <WordOption
+                key={item.word}
+                word={item.word}
+                isSelected={selectedWord?.word === item.word}
+                onSelect={() =>
+                  setSelectedWord(
+                    selectedWord?.word === item.word ? null : item
+                  )
                 }
-                className={`rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all duration-200 ${
-                  selectedWord === word
-                    ? 'border-[#7C3AED] bg-white text-[#7C3AED] shadow-sm ring-1 ring-[#7C3AED]/20'
-                    : 'border-transparent bg-white text-gray-600 shadow-sm ring-1 ring-gray-950/5 hover:border-gray-200 hover:text-gray-900'
-                } `}
-              >
-                {word}
-              </button>
+              />
             ))}
           </div>
 
@@ -75,8 +65,8 @@ export default function CreateWordModal({
               disabled={!selectedWord}
               onClick={() => {
                 if (selectedWord) {
-                  // In a real app, you might want to pass the selected word via query params or context
-                  // router.push(`/admin/words/create?word=${encodeURIComponent(selectedWord)}`)
+                  // Use Zustand store instead of URL params
+                  useWordStore.getState().setSelectedWord(selectedWord);
                   router.push('/admin/words/create');
                 }
               }}

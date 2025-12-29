@@ -1,8 +1,10 @@
 'use client';
 
-import { Edit2, Trash2, Search, Plus } from 'lucide-react';
+import { Edit2, Trash2, Search, Plus, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import CreateWordModal from './CreateWordModal';
+import { RecommendedWord } from '@/store/wordStore';
+import api from '@/lib/axios';
 
 // Dummy data mirroring the screenshot
 const words = [
@@ -48,8 +50,36 @@ const words = [
   },
 ];
 
+// Define result type
+interface ApiResponse {
+  result: string;
+}
+
 export default function WordTable() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [recommendedWords, setRecommendedWords] = useState<RecommendedWord[]>(
+    []
+  );
+  const [isLoading, setIsLoading] = useState(false);
+
+  const getWords = async () => {
+    try {
+      setIsLoading(true);
+      // api<ResponseT>(url, data)
+      const response = await api<ApiResponse>('/create-words', {});
+      const parsedData = JSON.parse(response.data.result);
+
+      if (parsedData.words) {
+        setRecommendedWords(parsedData.words);
+      }
+
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error('Error fetching words:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -66,17 +96,28 @@ export default function WordTable() {
           </button>
         </div>
         <button
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 rounded-lg bg-[#7C3AED] px-6 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#6D28D9]"
+          onClick={getWords}
+          disabled={isLoading}
+          className="flex items-center gap-2 rounded-lg bg-[#7C3AED] px-6 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#6D28D9] disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <Plus className="h-4 w-4" />
-          새로운 단어 생성
+          {isLoading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              생성 중...
+            </>
+          ) : (
+            <>
+              <Plus className="h-4 w-4" />
+              새로운 단어 생성
+            </>
+          )}
         </button>
       </div>
 
       <CreateWordModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        words={recommendedWords}
       />
 
       <div className="text-sm font-medium text-gray-600">

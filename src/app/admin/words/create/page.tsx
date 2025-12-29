@@ -1,19 +1,89 @@
 'use client';
 
-import { ArrowLeft, X } from 'lucide-react';
+import { ArrowLeft, X, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useWordStore } from '@/store/wordStore';
+import { createClient } from '@/utils/supabase/client';
 
 export default function WordCreatePage() {
-  const [examples, setExamples] = useState([{ id: 1 }]);
+  const router = useRouter();
+  const { selectedWord } = useWordStore();
+  const supabase = createClient();
+
+  const [examples, setExamples] = useState([
+    selectedWord
+      ? {
+          id: Date.now(),
+          kr: selectedWord.example_kr,
+          en: selectedWord.example_en,
+        }
+      : { id: 1, kr: '', en: '' },
+  ]);
+  const [word, setWord] = useState(selectedWord?.word || '');
+  const [pronunciation, setPronunciation] = useState(
+    selectedWord?.pronunciation || ''
+  );
+  const [hashtags, setHashtags] = useState(
+    selectedWord?.hashtags.join(' ') || ''
+  );
+  const [meaning, setMeaning] = useState(selectedWord?.meaning || '');
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [isPublished, setIsPublished] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const addExample = () => {
-    setExamples((prev) => [...prev, { id: Date.now() }]);
+    setExamples((prev) => [...prev, { id: Date.now(), kr: '', en: '' }]);
   };
 
   const removeExample = (id: number) => {
     if (window.confirm('정말 삭제하시겠습니까?')) {
       setExamples((prev) => prev.filter((ex) => ex.id !== id));
+    }
+  };
+
+  const handleSave = async () => {
+    if (!word || !meaning) {
+      alert('단어와 의미는 필수 입력 항목입니다.');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+
+      // Parse hashtags
+      const hashtagArray = hashtags
+        .split(' ')
+        .filter((tag) => tag.trim() !== '')
+        .map((tag) => (tag.startsWith('#') ? tag : `#${tag}`));
+
+      // Basic schema supports one example pair. We take the first one.
+      const exampleKr = examples.length > 0 ? examples[0].kr : '';
+      const exampleEn = examples.length > 0 ? examples[0].en : '';
+
+      const { error } = await supabase.from('words').insert([
+        {
+          word,
+          pronunciation,
+          meaning,
+          example_kr: exampleKr,
+          example_en: exampleEn,
+          hashtags: hashtagArray,
+          image_url: imageUrl,
+          is_published: isPublished,
+        },
+      ]);
+
+      if (error) throw error;
+
+      alert('저장되었습니다.');
+      router.push('/admin');
+    } catch (error) {
+      console.error('Error saving word:', error);
+      alert('저장에 실패했습니다.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -49,6 +119,8 @@ export default function WordCreatePage() {
             <input
               type="text"
               id="word"
+              value={word}
+              onChange={(e) => setWord(e.target.value)}
               className="block w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 focus:border-purple-600 focus:ring-1 focus:ring-purple-600 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
               placeholder="단어를 입력하세요"
             />
@@ -66,6 +138,8 @@ export default function WordCreatePage() {
               <input
                 type="text"
                 id="pronunciation"
+                value={pronunciation}
+                onChange={(e) => setPronunciation(e.target.value)}
                 className="block w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 focus:border-purple-600 focus:ring-1 focus:ring-purple-600 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
                 placeholder="발음을 입력하세요"
               />
@@ -80,27 +154,32 @@ export default function WordCreatePage() {
               <input
                 type="text"
                 id="hashtag"
+                value={hashtags}
+                onChange={(e) => setHashtags(e.target.value)}
                 className="block w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 focus:border-purple-600 focus:ring-1 focus:ring-purple-600 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
-                placeholder="#해시태그"
+                placeholder="#해시태그 (공백으로 구분)"
               />
             </div>
           </div>
         </div>
       </div>
 
+      {/* Meaning Section */}
       <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
         <div className="space-y-2">
           <label
-            htmlFor="usage"
+            htmlFor="meaning"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300"
           >
-            사용 예시 설명
+            의미
           </label>
           <textarea
-            id="usage"
+            id="meaning"
             rows={3}
+            value={meaning}
+            onChange={(e) => setMeaning(e.target.value)}
             className="block w-full resize-none rounded-lg border border-gray-300 px-4 py-3 text-gray-900 focus:border-purple-600 focus:ring-1 focus:ring-purple-600 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
-            placeholder="사용 예시를 설명해주세요"
+            placeholder="단어의 의미를 입력해주세요"
           />
         </div>
       </div>
@@ -129,13 +208,15 @@ export default function WordCreatePage() {
                 <h3 className="text-sm font-bold text-gray-900 dark:text-white">
                   예시 {index + 1}
                 </h3>
-                <button
-                  type="button"
-                  onClick={() => removeExample(example.id)}
-                  className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+                {index > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => removeExample(example.id)}
+                    className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
               </div>
 
               <div className="space-y-4">
@@ -145,6 +226,12 @@ export default function WordCreatePage() {
                   </label>
                   <input
                     type="text"
+                    value={example.kr}
+                    onChange={(e) => {
+                      const newExamples = [...examples];
+                      newExamples[index].kr = e.target.value;
+                      setExamples(newExamples);
+                    }}
                     className="block w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 focus:border-purple-600 focus:ring-1 focus:ring-purple-600 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
                     placeholder="한국어 예시를 입력하세요"
                   />
@@ -155,6 +242,12 @@ export default function WordCreatePage() {
                   </label>
                   <input
                     type="text"
+                    value={example.en}
+                    onChange={(e) => {
+                      const newExamples = [...examples];
+                      newExamples[index].en = e.target.value;
+                      setExamples(newExamples);
+                    }}
                     className="block w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 focus:border-purple-600 focus:ring-1 focus:ring-purple-600 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
                     placeholder="영어 번역을 입력하세요"
                   />
@@ -206,6 +299,8 @@ export default function WordCreatePage() {
         <input
           id="publish"
           type="checkbox"
+          checked={isPublished}
+          onChange={(e) => setIsPublished(e.target.checked)}
           className="h-6 w-6 rounded border-gray-300 text-purple-600 focus:ring-purple-600 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-900"
         />
         <label
@@ -236,8 +331,11 @@ export default function WordCreatePage() {
           </Link>
           <button
             type="button"
-            className="rounded-lg bg-[#7C3AED] px-8 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-[#6D28D9]"
+            onClick={handleSave}
+            disabled={isSaving}
+            className="flex items-center gap-2 rounded-lg bg-[#7C3AED] px-8 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-[#6D28D9] disabled:opacity-50"
           >
+            {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
             저장
           </button>
         </div>
