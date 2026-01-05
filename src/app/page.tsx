@@ -11,8 +11,12 @@ export default function Home() {
   const [slides, setSlides] = useState([1, 2, 3]);
 
   useEffect(() => {
-    document.documentElement.style.background =
+    document.body.style.background =
       'linear-gradient(122.01deg, #FAF5FF 0%, #FCE7F3 50%, #FFEDD5 100%), #FFFFFF';
+
+    return () => {
+      document.body.style.background = '';
+    };
   }, []);
 
   return (
