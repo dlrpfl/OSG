@@ -1,32 +1,51 @@
 @use 'sass:list';
 
 @layer base {
-  .pretendard {
-    font-family: 'pretendard';
+  .scdream {
+    font-family: 'SCDream';
   }
 }
 
-$fonts: (pretendard);
+$fonts: (SCDream);
 $types1: (
-  Thin: 100,
-  ExtraLight: 200,
-  Light: 300,
-  Regular: 400,
-  Medium: 500,
-  SemiBold: 600,
-  Bold: 700,
-  ExtraBold: 800,
-  Black: 900,
+  1: 100,
+  2: 200,
+  3: 300,
+  4: 400,
+  5: 500,
+  6: 600,
+  7: 700,
+  8: 800,
+  9: 900,
 );
 @each $font in $fonts {
-  @if $font == 'pretendard' {
+  @if $font == 'SCDream' {
     @each $type in $types1 {
       @font-face {
         font-family: '#{$font}';
         font-weight: #{list.nth($type, 2)};
-        src: url('/Pretendard-#{list.nth($type,1)}.subset.woff2')
-          format('woff2');
+        src: url('/SCDream#{list.nth($type,1)}.otf') format('opentype');
       }
+    }
+  }
+}
+
+.swiper-pagination {
+  display: flex;
+  justify-content: center;
+  position: static;
+  margin-top: 24px;
+  gap: 6px;
+
+  &-bullet {
+    margin: 0 !important;
+    background-color: #b5b5b5;
+    opacity: 1 !important;
+    border-radius: 12px !important;
+
+    &-active {
+      background-color: #000;
+      width: 24px !important;
     }
   }
 }
