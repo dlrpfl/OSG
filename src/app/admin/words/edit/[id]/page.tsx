@@ -2,40 +2,77 @@
 
 import { ArrowLeft, X, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { useWordStore } from '@/store/wordStore';
 import { createClient } from '@/utils/supabase/client';
 import api from '@/lib/axios';
 import { isAxiosError } from 'axios';
 
-export default function WordCreatePage() {
+export default function WordEditPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
-  const { selectedWord } = useWordStore();
+  // Unwrap params using React.use()
+  const resolvedParams = use(params);
+  const id = resolvedParams.id;
   const supabase = createClient();
 
-  const [examples, setExamples] = useState([
-    selectedWord
-      ? {
-          id: Date.now(),
-          kr: selectedWord.example_kr,
-          en: selectedWord.example_en,
-        }
-      : { id: 1, kr: '', en: '' },
-  ]);
-  const [word, setWord] = useState(selectedWord?.word || '');
-  const [pronunciation, setPronunciation] = useState(
-    selectedWord?.pronunciation || ''
-  );
-  const [hashtags, setHashtags] = useState(
-    selectedWord?.hashtags.join(' ') || ''
-  );
-  const [meaning, setMeaning] = useState(selectedWord?.meaning || '');
+  const [isLoading, setIsLoading] = useState(true);
+  const [examples, setExamples] = useState<{ id: number; kr: string; en: string }[]>([]);
+  const [word, setWord] = useState('');
+  const [pronunciation, setPronunciation] = useState('');
+  const [hashtags, setHashtags] = useState('');
+  const [meaning, setMeaning] = useState('');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [isPublished, setIsPublished] = useState(false);
 
+  const [isPublished, setIsPublished] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [createdAt, setCreatedAt] = useState('');
+
+  useEffect(() => {
+    const fetchWord = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('words')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          setWord(data.word || '');
+          setPronunciation(data.pronunciation || '');
+          setMeaning(data.meaning || '');
+          setHashtags(Array.isArray(data.hashtags) ? data.hashtags.join(' ') : '');
+          setImageUrl(data.image_url);
+          setIsPublished(data.is_published || false);
+          setCreatedAt(data.created_at ? data.created_at.split('T')[0] : '');
+
+          if (data.example_kr || data.example_en) {
+            setExamples([
+              {
+                id: Date.now(),
+                kr: data.example_kr || '',
+                en: data.example_en || '',
+              },
+            ]);
+          } else {
+            setExamples([{ id: Date.now(), kr: '', en: '' }]);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching word:', error);
+        alert('단어 정보를 불러오는데 실패했습니다.');
+        router.push('/admin');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchWord();
+    }
+  }, [id, router, supabase]);
 
   const addExample = () => {
     setExamples((prev) => [...prev, { id: Date.now(), kr: '', en: '' }]);
@@ -60,15 +97,14 @@ export default function WordCreatePage() {
         prompt: meaning,
       });
       
-      // Assuming result is base64 or url. 
-      // Ideally, prefixes like 'data:image/png;base64,' should be handled if not present.
       let result = response.data.result;
+      
       
       // Simple check to add prefix if it looks like raw base64
       if (!result.startsWith('http') && !result.startsWith('data:image')) {
           result = `data:image/png;base64,${result}`;
       }
-
+      
       // Convert Base64 to Blob
       const res = await fetch(result);
       const blob = await res.blob();
@@ -121,8 +157,9 @@ export default function WordCreatePage() {
       const exampleKr = examples.length > 0 ? examples[0].kr : '';
       const exampleEn = examples.length > 0 ? examples[0].en : '';
 
-      const { error } = await supabase.from('words').insert([
-        {
+      const { data, error } = await supabase
+        .from('words')
+        .update({
           word,
           pronunciation,
           meaning,
@@ -131,20 +168,36 @@ export default function WordCreatePage() {
           hashtags: hashtagArray,
           image_url: imageUrl,
           is_published: isPublished,
-        },
-      ]);
+        })
+        .eq('id', id)
+        .select();
+
+      if (error) {
+        console.error('Supabase update error:', error);
+        throw error;
+      }
+      
+      console.log('Updated data:', data);
 
       if (error) throw error;
 
-      alert('저장되었습니다.');
+      alert('수정되었습니다.');
       router.push('/admin');
     } catch (error) {
-      console.error('Error saving word:', error);
-      alert('저장에 실패했습니다.');
+      console.error('Error updating word:', error);
+      alert('수정에 실패했습니다.');
     } finally {
       setIsSaving(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -386,7 +439,7 @@ export default function WordCreatePage() {
         <div>
           <input
             type="date"
-            defaultValue={new Date().toISOString().split('T')[0]}
+            defaultValue={createdAt}
             className="rounded-lg border border-gray-300 px-4 py-2 text-gray-900 focus:border-purple-600 focus:ring-1 focus:ring-purple-600 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
           />
         </div>
@@ -406,7 +459,7 @@ export default function WordCreatePage() {
             className="flex items-center gap-2 rounded-lg bg-[#7C3AED] px-8 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-[#6D28D9] disabled:opacity-50"
           >
             {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-            저장
+            수정 완료
           </button>
         </div>
       </div>

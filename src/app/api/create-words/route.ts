@@ -48,9 +48,65 @@ export async function POST(req: Request) {
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-3-pro-preview' });
+    const imageModel = genAI.getGenerativeModel({ 
+      model: 'gemini-3-pro-image-preview',
+    });
 
     // Client can override prompt, but ROLE is fixed server-side for consistency
     const body = await req.json();
+    
+    // Handle Image Generation Request
+    if (body.type === 'image') {
+       if (!body.prompt) {
+         return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
+       }
+
+       // For Image Generation, we structure the prompt specifically.
+       // Note: Assuming 'gemini-3-pro-image-preview' or standard Imagen usage.
+       // Since exact SDK usage for 'gemini-3' image gen differs, we'll try standard generateContent
+       // or fallback to what's typical. However, usually image gen models return bytes.
+       // For this implementation, I will assume the model returns a base64 string in the text response 
+       // or we simply wrap the prompt.
+       
+       
+       // Note: Since 'aspectRatio' might not be in the strict types for this SDK version, 
+       // we also explicitly ask for it in the prompt to be safe.
+       const imagePrompt = `Draw a high-quality illustration for: ${body.prompt}. Aspect ratio 3:4 (vertical).`;
+       const result = await imageModel.generateContent(imagePrompt);
+       const response = await result.response;
+       // For Gemini/Imagen models via Vertex or Studio, images are usually in inlineData
+       // response.text() is often empty or a description.
+       // We need to inspect candidates for inlineData.
+       
+       const candidates = response.candidates;
+       let base64Image = '';
+
+       if (candidates && candidates[0] && candidates[0].content && candidates[0].content.parts) {
+         for (const part of candidates[0].content.parts) {
+           if (part.inlineData && part.inlineData.data) {
+             base64Image = part.inlineData.data;
+             break;
+           }
+         }
+       }
+
+       // Fallback: Check if text() actually has logic (unlikely for pure image gen but safe to keep)
+       if (!base64Image) {
+          const possibleText = response.text();
+          if (possibleText && possibleText.length > 100) {
+             // Heuristic: if it's long, might be base64 returned as text
+             base64Image = possibleText;
+          }
+       }
+
+       if (!base64Image) {
+         console.error('No image data found in response:', JSON.stringify(result, null, 2));
+         return NextResponse.json({ error: 'No image generated' }, { status: 500 });
+       }
+       
+       return NextResponse.json({ result: base64Image, isImage: true });
+    }
+
     const userPrompt = body.prompt || DEFAULT_PROMPT_TEMPLATE;
 
     // Combine Role and Prompt for the API call

@@ -1,85 +1,123 @@
 'use client';
 
 import { Edit2, Trash2, Search, Plus, Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import CreateWordModal from './CreateWordModal';
+import { supabase } from '@/lib/supabase';
 import { RecommendedWord } from '@/store/wordStore';
 import api from '@/lib/axios';
+import { isAxiosError } from 'axios';
 
-// Dummy data mirroring the screenshot
-const words = [
-  {
-    id: 1,
-    date: '2025. 12. 03.',
-    word: '꿀잼',
-    imageStatus: '생성 완료',
-    workStatus: '디자인 완료',
-    displayStatus: 'Y',
-  },
-  {
-    id: 2,
-    date: '2025. 12. 03.',
-    word: '맛있으면 0 칼로리',
-    imageStatus: '', // Empty in screenshot
-    workStatus: '기획 완료',
-    displayStatus: 'Y',
-  },
-  {
-    id: 3,
-    date: '2025. 12. 03.',
-    word: '럭키비키',
-    imageStatus: '생성 전',
-    workStatus: '디자인 완료',
-    displayStatus: 'Y',
-  },
-  {
-    id: 4,
-    date: '2025. 12. 03.',
-    word: '꿀잼',
-    imageStatus: '생성 완료',
-    workStatus: '기획 완료',
-    displayStatus: 'Y',
-  },
-  {
-    id: 5,
-    date: '2025. 12. 03.',
-    word: '맛있으면 0 칼로리',
-    imageStatus: '생성 완료',
-    workStatus: '기획 완료',
-    displayStatus: 'Y',
-  },
-];
-
-// Define result type
 interface ApiResponse {
   result: string;
 }
 
+interface ParsedData {
+  words: RecommendedWord[];
+}
+
+
+interface TableWord {
+  id: number;
+  created_at: string; // ISO timestamp from Supabase
+  word: string;
+  imageStatus: string;
+  workStatus: string;
+  displayStatus: string;
+  image_url: string;
+  is_published: boolean;
+}
+
 export default function WordTable() {
+  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [recommendedWords, setRecommendedWords] = useState<RecommendedWord[]>(
-    []
-  );
+  const [rows, setRows] = useState<TableWord[]>([]);
+  const [suggestedWords, setSuggestedWords] = useState<RecommendedWord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const getWords = async () => {
+  // Fetch rows for the table (no modal)
+  const fetchRows = async () => {
     try {
       setIsLoading(true);
-      // api<ResponseT>(url, data)
-      const response = await api<ApiResponse>('/create-words', {});
-      const parsedData = JSON.parse(response.data.result);
+      const { data, error } = await supabase
+        .from('words')
+        .select('*')
+        .order('id', { ascending: true });
 
-      if (parsedData.words) {
-        setRecommendedWords(parsedData.words);
+      if (error) {
+        console.error('Supabase fetch error:', error);
+        alert('Failed to load words.');
+        return;
       }
 
-      setIsModalOpen(true);
-    } catch (error) {
-      console.error('Error fetching words:', error);
+      if (data) {
+        setRows(data);
+      }
+    } catch (e) {
+      console.error('Unexpected error:', e);
+      alert('Unexpected error while loading words.');
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Load table data on mount
+  useEffect(() => {
+    fetchRows();
+  }, []);
+
+  // Handler for the "새로운 단어 생성" button – generate words via API then open modal
+  const handleCreateClick = async () => {
+    try {
+      setIsLoading(true);
+      const response = await api<ApiResponse>('/create-words', {});
+      const parsedData = JSON.parse(response.data.result) as ParsedData;
+
+      if (parsedData.words) {
+        setSuggestedWords(parsedData.words);
+        setIsModalOpen(true);
+      }
+    } catch (error: unknown) {
+      console.error('Error fetching words:', error);
+      let errorMessage = 'Failed to fetch words. Please try again.';
+
+      if (isAxiosError(error)) {
+        const data = error.response?.data as { error?: string };
+        if (data?.error) {
+          errorMessage = data.error;
+        }
+      }
+      alert(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Edit button – navigate to edit page (you can replace with a modal later)
+  const handleEdit = (id: number) => {
+    router.push(`/admin/words/edit/${id}`);
+  };
+
+  // Delete button – remove row from Supabase and refresh list
+  const handleDelete = async (id: number) => {
+    setIsLoading(true);
+    const { data, error } = await supabase
+      .from('words')
+      .delete()
+      .eq('id', id)
+      .select(); // return deleted rows for confirmation
+
+    if (error) {
+      console.error('Supabase delete error:', error);
+      alert('Failed to delete word.');
+    } else {
+      console.log('Deleted rows:', data);
+      await fetchRows();
+    }
+    setIsLoading(false);
+  };
+
 
   return (
     <div className="space-y-6">
@@ -96,7 +134,7 @@ export default function WordTable() {
           </button>
         </div>
         <button
-          onClick={getWords}
+          onClick={handleCreateClick}
           disabled={isLoading}
           className="flex items-center gap-2 rounded-lg bg-[#7C3AED] px-6 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#6D28D9] disabled:cursor-not-allowed disabled:opacity-50"
         >
@@ -117,11 +155,13 @@ export default function WordTable() {
       <CreateWordModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        words={recommendedWords}
+        words={suggestedWords}
+        onRetry={handleCreateClick}
+        isLoading={isLoading}
       />
 
       <div className="text-sm font-medium text-gray-600">
-        총 <span className="text-gray-900">{words.length}개</span>
+        총 <span className="text-gray-900">{rows.length}개</span>
       </div>
 
       {/* Table */}
@@ -142,47 +182,59 @@ export default function WordTable() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {words.map((item) => (
+            {rows.map((item) => (
               <tr key={item.id} className="hover:bg-gray-50/50">
                 <td className="px-6 py-5 text-center text-sm font-medium text-gray-600">
-                  {item.date}
+                  {new Date(item.created_at).toLocaleDateString('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                  })}
                 </td>
                 <td className="px-6 py-5 text-center text-sm font-bold text-gray-900">
                   {item.word}
                 </td>
                 <td className="px-6 py-5 text-center">
-                  {item.imageStatus && (
-                    <span
-                      className={`inline-flex w-24 items-center justify-center rounded-full px-4 py-1.5 text-xs font-medium ${
-                        item.imageStatus === '생성 완료'
-                          ? 'bg-[#FEF3C7] text-[#92400E]'
-                          : 'bg-gray-100 text-gray-500'
-                      }`}
+                  {item.image_url ? (
+                    <a
+                      href={item.image_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"
                     >
-                      {item.imageStatus}
+                      이미지 보기
+                    </a>
+                  ) : (
+                    <span className="inline-flex w-24 items-center justify-center rounded-full bg-gray-100 px-4 py-1.5 text-xs font-medium text-gray-500">
+                      미생성
                     </span>
                   )}
                 </td>
                 <td className="px-6 py-5 text-center">
                   <span
-                    className={`inline-flex w-24 items-center justify-center rounded-full px-4 py-1.5 text-xs font-medium ${
-                      item.workStatus === '디자인 완료'
+                    className={`inline-flex w-24 items-center justify-center rounded-full px-4 py-1.5 text-xs font-medium ${item.workStatus === '디자인 완료'
                         ? 'bg-[#DCFCE7] text-[#166534]'
                         : 'bg-[#FEF3C7] text-[#92400E]'
-                    }`}
+                      }`}
                   >
                     {item.workStatus}
                   </span>
                 </td>
                 <td className="px-6 py-5 text-center text-sm text-gray-600">
-                  {item.displayStatus}
+                  {item.is_published ? '발행' : '미발행'}
                 </td>
                 <td className="px-6 py-5 text-center">
                   <div className="flex items-center justify-center gap-3">
-                    <button className="text-gray-400 transition-colors hover:text-gray-600">
+                    <button
+                      className="text-gray-400 transition-colors hover:text-gray-600"
+                      onClick={() => handleEdit(item.id)}
+                    >
                       <Edit2 className="h-5 w-5" />
                     </button>
-                    <button className="text-gray-400 transition-colors hover:text-red-500">
+                    <button
+                      className="text-gray-400 transition-colors hover:text-red-500"
+                      onClick={() => handleDelete(item.id)}
+                    >
                       <Trash2 className="h-5 w-5" />
                     </button>
                   </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { X } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useWordStore, RecommendedWord } from '@/store/wordStore';
@@ -10,12 +10,16 @@ interface CreateWordModalProps {
   isOpen: boolean;
   onClose: () => void;
   words: RecommendedWord[];
+  onRetry: () => void;
+  isLoading: boolean;
 }
 
 export default function CreateWordModal({
   isOpen,
   onClose,
   words,
+  onRetry,
+  isLoading,
 }: CreateWordModalProps) {
   const router = useRouter();
   const [selectedWord, setSelectedWord] = useState<RecommendedWord | null>(
@@ -58,7 +62,12 @@ export default function CreateWordModal({
 
           {/* Actions */}
           <div className="flex justify-end gap-3">
-            <button className="rounded-full bg-black px-8 py-3 text-xs font-bold tracking-wider text-white transition-colors hover:bg-gray-800">
+            <button
+              onClick={onRetry}
+              disabled={isLoading}
+              className="flex items-center gap-2 rounded-full bg-black px-8 py-3 text-xs font-bold tracking-wider text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isLoading && <Loader2 className="h-3 w-3 animate-spin" />}
               RETRY
             </button>
             <button
