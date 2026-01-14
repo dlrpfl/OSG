@@ -71,7 +71,7 @@ export async function POST(req: Request) {
        
        // Note: Since 'aspectRatio' might not be in the strict types for this SDK version, 
        // we also explicitly ask for it in the prompt to be safe.
-       const imagePrompt = `Draw a high-quality illustration for: ${body.prompt}. Aspect ratio 3:4 (vertical).`;
+       const imagePrompt = `Draw a high-quality illustration for: ${body.prompt}. Aspect ratio 4:3 (horizontal).`;
        const result = await imageModel.generateContent(imagePrompt);
        const response = await result.response;
        // For Gemini/Imagen models via Vertex or Studio, images are usually in inlineData

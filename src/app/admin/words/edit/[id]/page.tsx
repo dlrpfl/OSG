@@ -387,7 +387,7 @@ export default function WordEditPage({ params }: { params: Promise<{ id: string 
         </div>
 
         {/* Image Display Area */}
-        <div className="relative mx-auto flex aspect-[3/4] w-full max-w-sm flex-col items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50">
+        <div className="relative mx-auto flex aspect-[4/3] w-full max-w-sm flex-col items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50">
           {imageUrl ? (
             <img 
               src={imageUrl} 
