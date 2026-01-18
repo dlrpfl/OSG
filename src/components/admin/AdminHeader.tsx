@@ -1,16 +1,12 @@
 'use client';
 
 import { Search, User, LogOut } from 'lucide-react';
-import { createClient } from '@/utils/supabase/client';
-import { useRouter } from 'next/navigation';
+import { logout } from '@/app/actions/auth';
 
 export default function AdminHeader() {
-  const router = useRouter();
-  const supabase = createClient();
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push('/login');
+    await logout();
   };
 
   return (

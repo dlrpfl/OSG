@@ -22,6 +22,7 @@ export default function WordEditPage({ params }: { params: Promise<{ id: string 
   const [hashtags, setHashtags] = useState('');
   const [meaning, setMeaning] = useState('');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imagePrompt, setImagePrompt] = useState('');
 
   const [isPublished, setIsPublished] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -45,6 +46,7 @@ export default function WordEditPage({ params }: { params: Promise<{ id: string 
           setMeaning(data.meaning || '');
           setHashtags(Array.isArray(data.hashtags) ? data.hashtags.join(' ') : '');
           setImageUrl(data.image_url);
+          setImagePrompt(data.meaning || '');
           setIsPublished(data.is_published || false);
           setCreatedAt(data.created_at ? data.created_at.split('T')[0] : '');
 
@@ -85,8 +87,8 @@ export default function WordEditPage({ params }: { params: Promise<{ id: string 
   };
 
   const handleGenerateImage = async () => {
-    if (!meaning) {
-      alert('이미지를 생성하려면 "의미"를 먼저 입력해주세요.');
+    if (!imagePrompt) {
+      alert('이미지를 생성하려면 "프롬프트"를 입력해주세요.');
       return;
     }
 
@@ -94,7 +96,7 @@ export default function WordEditPage({ params }: { params: Promise<{ id: string 
       setIsGeneratingImage(true);
       const response = await api<{ result: string, isImage?: boolean }>('/create-words', {
         type: 'image',
-        prompt: meaning,
+        prompt: imagePrompt,
       });
       
       let result = response.data.result;
@@ -386,35 +388,57 @@ export default function WordEditPage({ params }: { params: Promise<{ id: string 
           </button>
         </div>
 
-        {/* Image Display Area */}
-        <div className="relative mx-auto flex aspect-[4/3] w-full max-w-sm flex-col items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50">
-          {imageUrl ? (
-            <img 
-              src={imageUrl} 
-              alt="Generated" 
-              className="h-full w-full object-cover" 
+        <div className="flex flex-col gap-6 lg:flex-row">
+          {/* Image Display Area */}
+          <div className="relative flex aspect-[4/3] w-full max-w-sm flex-col items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50">
+            {imageUrl ? (
+              <img 
+                src={imageUrl} 
+                alt="Generated" 
+                className="h-full w-full object-cover" 
+              />
+            ) : (
+              <div className="text-center">
+                <svg
+                  className="mx-auto h-12 w-12 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                  이미지 생성 버튼을 눌러 이미지를 만들어주세요.
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Prompt Input Area */}
+          <div className="flex flex-1 flex-col">
+            <label
+              htmlFor="imagePrompt"
+              className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              이미지 프롬프트
+            </label>
+            <textarea
+              id="imagePrompt"
+              value={imagePrompt}
+              onChange={(e) => setImagePrompt(e.target.value)}
+              className="flex-1 resize-none rounded-lg border border-gray-300 p-4 text-sm text-gray-900 focus:border-purple-600 focus:ring-1 focus:ring-purple-600 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
+              placeholder="이미지 생성을 위한 프롬프트를 입력하세요"
             />
-          ) : (
-            <div className="text-center">
-              <svg
-                className="mx-auto h-12 w-12 text-gray-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
-              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                이미지 생성 버튼을 눌러 이미지를 만들어주세요.
-              </p>
-            </div>
-          )}
+            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              기본적으로 단어의 의미가 설정됩니다. 필요에 따라 수정하여 이미지를 생성하세요.
+            </p>
+          </div>
         </div>
       </div>
 

@@ -35,15 +35,19 @@ export default function WordTable() {
   const [rows, setRows] = useState<TableWord[]>([]);
   const [suggestedWords, setSuggestedWords] = useState<RecommendedWord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Fetch rows for the table (no modal)
-  const fetchRows = async () => {
+  const fetchRows = async (term = '') => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
-        .from('words')
-        .select('*')
-        .order('id', { ascending: true });
+      let query = supabase.from('words').select('*', { count: 'exact' });
+
+      if (term) {
+        query = query.or(`word.ilike.%${term}%,meaning.ilike.%${term}%`);
+      }
+
+      const { data, error } = await query.order('id', { ascending: true });
 
       if (error) {
         console.error('Supabase fetch error:', error);
@@ -66,6 +70,16 @@ export default function WordTable() {
   useEffect(() => {
     fetchRows();
   }, []);
+
+  const handleSearch = () => {
+    fetchRows(searchTerm);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
 
   // Handler for the "새로운 단어 생성" button – generate words via API then open modal
   const handleCreateClick = async () => {
@@ -127,9 +141,15 @@ export default function WordTable() {
           <input
             type="text"
             placeholder="단어나 의미로 검색"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={handleKeyDown}
             className="w-full rounded-lg border border-gray-300 py-2.5 pr-10 pl-4 text-sm focus:border-purple-600 focus:ring-1 focus:ring-purple-600 focus:outline-none"
           />
-          <button className="absolute top-1/2 right-2 -translate-y-1/2 p-1 text-gray-500 hover:text-gray-700">
+          <button 
+            onClick={handleSearch}
+            className="absolute top-1/2 right-2 -translate-y-1/2 p-1 text-gray-500 hover:text-gray-700"
+          >
             <Search className="h-5 w-5" />
           </button>
         </div>

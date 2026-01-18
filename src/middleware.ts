@@ -1,7 +1,21 @@
-import { type NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/utils/supabase/middleware";
 
 export async function middleware(request: NextRequest) {
+  // 1. Admin Auth Check
+  if (request.nextUrl.pathname.startsWith('/admin')) {
+    const adminSession = request.cookies.get('admin_session');
+    const isLoginPage = request.nextUrl.pathname === '/admin/login';
+
+    if (!adminSession && !isLoginPage) {
+      return NextResponse.redirect(new URL('/admin/login', request.url));
+    }
+
+    if (adminSession && isLoginPage) {
+      return NextResponse.redirect(new URL('/admin', request.url));
+    }
+  }
+
   return await updateSession(request);
 }
 
