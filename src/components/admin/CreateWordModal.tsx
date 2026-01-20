@@ -10,14 +10,16 @@ interface CreateWordModalProps {
   isOpen: boolean;
   onClose: () => void;
   words: RecommendedWord[];
-  onRetry: () => void;
+  onRetry: (prompt?: string) => void;
   isLoading: boolean;
+  initialPrompt?: string;
 }
 
 export default function CreateWordModal({
   isOpen,
   onClose,
   words,
+  initialPrompt,
   onRetry,
   isLoading,
 }: CreateWordModalProps) {
@@ -25,6 +27,13 @@ export default function CreateWordModal({
   const [selectedWord, setSelectedWord] = useState<RecommendedWord | null>(
     null
   );
+  const [prompt, setPrompt] = useState(initialPrompt || '');
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Update local prompt state when initialPrompt changes
+  if (initialPrompt && prompt === '' && !isExpanded) {
+      setPrompt(initialPrompt);
+  }
 
   if (!isOpen) return null;
 
@@ -60,15 +69,35 @@ export default function CreateWordModal({
             ))}
           </div>
 
+          {/* Prompt Section */}
+          <div className="mb-6">
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="text-sm text-gray-500 underline"
+            >
+              {isExpanded ? '프롬프트 숨기기' : '프롬프트 보기/수정'}
+            </button>
+            {isExpanded && (
+              <div className="mt-2 space-y-2">
+                 <textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  className="w-full h-32 rounded-lg border border-gray-300 p-3 text-sm text-gray-900 focus:border-purple-600 focus:outline-none"
+                  placeholder="프롬프트를 수정하세요..."
+                />
+              </div>
+            )}
+          </div>
+
           {/* Actions */}
           <div className="flex justify-end gap-3">
             <button
-              onClick={onRetry}
+              onClick={() => onRetry(prompt)}
               disabled={isLoading}
               className="flex items-center gap-2 rounded-full bg-black px-8 py-3 text-xs font-bold tracking-wider text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading && <Loader2 className="h-3 w-3 animate-spin" />}
-              RETRY
+              {isExpanded ? 'REGENERATE WITH PROMPT' : 'RETRY'}
             </button>
             <button
               disabled={!selectedWord}

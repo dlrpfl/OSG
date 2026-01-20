@@ -28,12 +28,13 @@ export default function WordCreatePage() {
     selectedWord?.pronunciation || ''
   );
   const [hashtags, setHashtags] = useState(
-    selectedWord?.hashtags.join(' ') || ''
+    selectedWord?.hashtags?.join(' ') || ''
   );
   const [meaning, setMeaning] = useState(selectedWord?.meaning || '');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imagePrompt, setImagePrompt] = useState(selectedWord?.meaning || '');
   const [isPublished, setIsPublished] = useState(false);
+  const [workStatus, setWorkStatus] = useState('작업전');
 
   const [isSaving, setIsSaving] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
@@ -132,6 +133,7 @@ export default function WordCreatePage() {
           hashtags: hashtagArray,
           image_url: imageUrl,
           is_published: isPublished,
+          work_status: workStatus,
         },
       ]);
 
@@ -388,20 +390,47 @@ export default function WordCreatePage() {
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        <input
-          id="publish"
-          type="checkbox"
-          checked={isPublished}
-          onChange={(e) => setIsPublished(e.target.checked)}
-          className="h-6 w-6 rounded border-gray-300 text-purple-600 focus:ring-purple-600 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-900"
-        />
-        <label
-          htmlFor="publish"
-          className="text-xl font-medium text-gray-700 dark:text-gray-300"
-        >
-          발행 여부
-        </label>
+      <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3">
+          <input
+            id="publish"
+            type="checkbox"
+            checked={isPublished}
+            onChange={(e) => setIsPublished(e.target.checked)}
+            className="h-6 w-6 rounded border-gray-300 text-purple-600 focus:ring-purple-600 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-900"
+          />
+          <label
+            htmlFor="publish"
+            className="text-xl font-medium text-gray-700 dark:text-gray-300"
+          >
+            발행 여부
+          </label>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <label
+            htmlFor="workStatus"
+            className="text-xl font-medium text-gray-700 dark:text-gray-300"
+          >
+            작업 상태
+          </label>
+          <select
+            id="workStatus"
+            value={workStatus}
+            onChange={(e) => setWorkStatus(e.target.value)}
+            className={`rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium focus:border-purple-600 focus:ring-1 focus:ring-purple-600 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white ${
+              workStatus === '디자인완료'
+                ? 'bg-[#DCFCE7] text-[#166534]'
+                : workStatus === '기획완료'
+                ? 'bg-[#FEF3C7] text-[#92400E]'
+                : 'bg-white text-gray-900'
+            }`}
+          >
+            <option value="작업전">작업전</option>
+            <option value="기획완료">기획완료</option>
+            <option value="디자인완료">디자인완료</option>
+          </select>
+        </div>
       </div>
 
       <div className="flex items-center justify-between pt-4">

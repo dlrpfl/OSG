@@ -11,6 +11,7 @@ import { isAxiosError } from 'axios';
 
 interface ApiResponse {
   result: string;
+  usedPrompt?: string;
 }
 
 interface ParsedData {
@@ -23,7 +24,7 @@ interface TableWord {
   created_at: string; // ISO timestamp from Supabase
   word: string;
   imageStatus: string;
-  workStatus: string;
+  work_status: string; // Changed from workStatus to match DB
   displayStatus: string;
   image_url: string;
   is_published: boolean;
@@ -36,6 +37,7 @@ export default function WordTable() {
   const [suggestedWords, setSuggestedWords] = useState<RecommendedWord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPrompt, setCurrentPrompt] = useState('');
 
   // Fetch rows for the table (no modal)
   const fetchRows = async (term = '') => {
@@ -82,14 +84,19 @@ export default function WordTable() {
   };
 
   // Handler for the "새로운 단어 생성" button – generate words via API then open modal
-  const handleCreateClick = async () => {
+  const handleCreateClick = async (customPrompt?: string) => {
     try {
       setIsLoading(true);
-      const response = await api<ApiResponse>('/create-words', {});
+      const response = await api<ApiResponse>('/create-words', {
+        prompt: customPrompt
+      });
       const parsedData = JSON.parse(response.data.result) as ParsedData;
 
       if (parsedData.words) {
         setSuggestedWords(parsedData.words);
+        if (response.data.usedPrompt) {
+            setCurrentPrompt(response.data.usedPrompt);
+        }
         setIsModalOpen(true);
       }
     } catch (error: unknown) {
@@ -133,6 +140,8 @@ export default function WordTable() {
   };
 
 
+
+
   return (
     <div className="space-y-6">
       {/* Top Controls */}
@@ -154,7 +163,7 @@ export default function WordTable() {
           </button>
         </div>
         <button
-          onClick={handleCreateClick}
+          onClick={() => handleCreateClick()}
           disabled={isLoading}
           className="flex items-center gap-2 rounded-lg bg-[#7C3AED] px-6 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#6D28D9] disabled:cursor-not-allowed disabled:opacity-50"
         >
@@ -178,6 +187,7 @@ export default function WordTable() {
         words={suggestedWords}
         onRetry={handleCreateClick}
         isLoading={isLoading}
+        initialPrompt={currentPrompt}
       />
 
       <div className="text-sm font-medium text-gray-600">
@@ -232,12 +242,15 @@ export default function WordTable() {
                 </td>
                 <td className="px-6 py-5 text-center">
                   <span
-                    className={`inline-flex w-24 items-center justify-center rounded-full px-4 py-1.5 text-xs font-medium ${item.workStatus === '디자인 완료'
+                    className={`inline-flex w-24 items-center justify-center rounded-full px-4 py-1.5 text-xs font-medium ${
+                      item.work_status === '디자인완료'
                         ? 'bg-[#DCFCE7] text-[#166534]'
-                        : 'bg-[#FEF3C7] text-[#92400E]'
-                      }`}
+                        : item.work_status === '기획완료'
+                        ? 'bg-[#FEF3C7] text-[#92400E]'
+                        : 'bg-gray-100 text-gray-500' // Changed '작업전' style to match initial gray style if desired, or keep specific.
+                    }`}
                   >
-                    {item.workStatus}
+                    {item.work_status || '작업전'}
                   </span>
                 </td>
                 <td className="px-6 py-5 text-center text-sm text-gray-600">

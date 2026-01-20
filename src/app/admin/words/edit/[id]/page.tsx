@@ -25,6 +25,7 @@ export default function WordEditPage({ params }: { params: Promise<{ id: string 
   const [imagePrompt, setImagePrompt] = useState('');
 
   const [isPublished, setIsPublished] = useState(false);
+  const [workStatus, setWorkStatus] = useState('작업전');
   const [isSaving, setIsSaving] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [createdAt, setCreatedAt] = useState('');
@@ -48,6 +49,7 @@ export default function WordEditPage({ params }: { params: Promise<{ id: string 
           setImageUrl(data.image_url);
           setImagePrompt(data.meaning || '');
           setIsPublished(data.is_published || false);
+          setWorkStatus(data.work_status || '작업전');
           setCreatedAt(data.created_at ? data.created_at.split('T')[0] : '');
 
           if (data.example_kr || data.example_en) {
@@ -170,6 +172,7 @@ export default function WordEditPage({ params }: { params: Promise<{ id: string 
           hashtags: hashtagArray,
           image_url: imageUrl,
           is_published: isPublished,
+          work_status: workStatus,
         })
         .eq('id', id)
         .select();
@@ -442,20 +445,47 @@ export default function WordEditPage({ params }: { params: Promise<{ id: string 
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        <input
-          id="publish"
-          type="checkbox"
-          checked={isPublished}
-          onChange={(e) => setIsPublished(e.target.checked)}
-          className="h-6 w-6 rounded border-gray-300 text-purple-600 focus:ring-purple-600 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-900"
-        />
-        <label
-          htmlFor="publish"
-          className="text-xl font-medium text-gray-700 dark:text-gray-300"
-        >
-          발행 여부
-        </label>
+      <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3">
+          <input
+            id="publish"
+            type="checkbox"
+            checked={isPublished}
+            onChange={(e) => setIsPublished(e.target.checked)}
+            className="h-6 w-6 rounded border-gray-300 text-purple-600 focus:ring-purple-600 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-900"
+          />
+          <label
+            htmlFor="publish"
+            className="text-xl font-medium text-gray-700 dark:text-gray-300"
+          >
+            발행 여부
+          </label>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <label
+            htmlFor="workStatus"
+            className="text-xl font-medium text-gray-700 dark:text-gray-300"
+          >
+            작업 상태
+          </label>
+          <select
+            id="workStatus"
+            value={workStatus}
+            onChange={(e) => setWorkStatus(e.target.value)}
+            className={`rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium focus:border-purple-600 focus:ring-1 focus:ring-purple-600 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white ${
+              workStatus === '디자인완료'
+                ? 'bg-[#DCFCE7] text-[#166534]'
+                : workStatus === '기획완료'
+                ? 'bg-[#FEF3C7] text-[#92400E]'
+                : 'bg-white text-gray-900'
+            }`}
+          >
+            <option value="작업전">작업전</option>
+            <option value="기획완료">기획완료</option>
+            <option value="디자인완료">디자인완료</option>
+          </select>
+        </div>
       </div>
 
       <div className="flex items-center justify-between pt-4">
