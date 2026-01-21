@@ -89,7 +89,7 @@ export default function Home() {
           >
             {words.map((word) => (
               <SwiperSlide key={word.id} className="h-auto!">
-                <div className="mx-auto h-auto! max-w-[375px] rounded-[8px] border-[2px] border-b-[8px] border-solid border-black bg-white">
+                <div className="mx-auto max-w-[375px] rounded-[8px] border-[2px] border-b-[8px] border-solid border-black bg-white">
                   {/* 해쉬태그 */}
                   <div className="flex gap-[20px] p-[14px] items-start">
                     <div className="flex items-center flex-wrap justify-between flex-1">
@@ -120,6 +120,14 @@ export default function Home() {
                     modules={[Pagination]}
                     pagination={{
                       type: 'bullets',
+                    }}
+                    onAfterInit={(swiper) => {
+                      const firstSlide = swiper.slides[0];
+                      const height = firstSlide.offsetHeight;
+
+                      swiper.slides.forEach((slide: HTMLElement) => {
+                        slide.style.height = `${height}px`;
+                      });
                     }}
                   >
                     <SwiperSlide>
@@ -173,7 +181,7 @@ export default function Home() {
                         </p>
                       </div>
                     </SwiperSlide>
-                    <SwiperSlide className="h-[-webkit-fill-available]!">
+                    <SwiperSlide>
                       <div className='h-full pt-[36px] pb-[8px] px-[20px]'>
                         <div className='h-full relative border-[2px] border-solid border-black rounded-[8px] bg-[#F5F5F5] before:content-[""] before:absolute before:left-[7px] before:top-[7px] before:w-full before:h-full before:bg-black before:rounded-[8px] before:z-[-1] flex items-center justify-center flex-col gap-[32px] p-[16px]'>
                           <p className='absolute left-[16px] top-[-20px] border-[2px] border-solid border-black rounded-[8px] h-[40px] flex items-center px-[12px] font-[500] text-[16px] bg-white'>
@@ -218,7 +226,7 @@ export default function Home() {
                         </div>
                       </div>
                     </SwiperSlide>
-                    <SwiperSlide className="h-[-webkit-fill-available]!">
+                    <SwiperSlide>
                       <div className='h-full pt-[36px] pb-[8px] px-[20px]'>
                         <div className='h-full relative border-[2px] border-solid border-black rounded-[8px] bg-[#F5F5F5] before:content-[""] before:absolute before:left-[7px] before:top-[7px] before:w-full before:h-full before:bg-black before:rounded-[8px] before:z-[-1] flex items-center justify-center flex-col gap-[32px] p-[16px]'>
                           <p className='absolute left-[16px] top-[-20px] border-[2px] border-solid border-black rounded-[8px] h-[40px] flex items-center px-[12px] font-[500] text-[16px] bg-white'>
