@@ -30,7 +30,7 @@ interface TableWord {
 export default function Home() {
   const [words, setWords] = useState<TableWord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isDropDownMenuOpen, setisDropDownMenuOpen] = useState(true);
+  const [isDropDownMenuOpen, setisDropDownMenuOpen] = useState(false);
   const [wordsSort, setWordsSort] = useState("Latest");
   const [innerSlideIndexMap, setInnerSlideIndexMap] = useState<Record<number, number>>({});
 
@@ -154,7 +154,7 @@ export default function Home() {
               },
 
               769: {
-                slidesPerView: 2.2
+                slidesPerView: 1.2
               }
             }}
             className="h-full items-center pr-[16px]! pl-[16px]! pt-[16px]! pb-[40px]!"
