@@ -148,6 +148,15 @@ export default function Home() {
               releaseOnEdges: true,
             }}
             modules={[Mousewheel]}
+            breakpoints={{
+              768: {
+                slidesPerView: 1
+              },
+
+              769: {
+                slidesPerView: 2.2
+              }
+            }}
             className="h-full items-center pr-[16px]! pl-[16px]! pt-[16px]! pb-[40px]!"
           >
             {sortedWords.map((word) => (
