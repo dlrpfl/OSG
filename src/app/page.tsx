@@ -90,6 +90,21 @@ export default function Home() {
     });
   };
 
+  // 음성변환
+  const speak = (text: string, lang = 'ko') => {
+    if (!('speechSynthesis' in window)) return;
+
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang;
+    utterance.rate = 0.5;
+    utterance.pitch = 1;
+    console.log(utterance)
+
+    window.speechSynthesis.speak(utterance);
+  };
+
 
   if (loading) {
     return (
@@ -195,7 +210,7 @@ export default function Home() {
                         </div>
                         <div className="border-t-[2px] border-solid border-black h-full">
                           <div className='h-[calc(100%-56px)] flex flex-col justify-center items-center p-[24px]'>
-                            <button type='button' className='mb-[8px]'>
+                            <button type='button' className='mb-[8px] cursor-pointer' onClick={() => speak(word.word)}>
                               <Speaker />
                             </button>
                             <p className="text-[26px] leading-[140%] font-[500] text-black">
@@ -224,7 +239,7 @@ export default function Home() {
                           <p className='font-[800] text-[86px] text-[#FFA37E] leading-[103px] tracking-[-0.02em] pt-[15px]'>Example</p>
                         </div>
                         <div className='flex-none flex flex-col items-center h-[calc(100%-174px)] border-t-[2px] border-solid border-black justify-center p-[22px]'>
-                          <button type='button' className='mb-[8px]'>
+                          <button type='button' className='mb-[8px] cursor-pointer' onClick={() => speak(word.word)}>
                             <Speaker />
                           </button>
                           <p className="text-[26px] leading-[140%] font-[500] text-black">
