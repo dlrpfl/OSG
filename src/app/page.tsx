@@ -192,12 +192,11 @@ export default function Home() {
                             </div>
                           </div>
                         </div>
-                        <div className="h-[205px]">
+                        <div className="h-[54.67vw] relative">
                           <Image
                             src={word.image_url}
                             alt={word.word}
-                            width={100}
-                            height={100}
+                            fill
                             className="h-full w-full object-cover"
                           />
                         </div>
