@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'Daily Korean | K-Lingo',
   description: 'Not in textbooks, but used every day. Slang, trends, and today’s Korean—naturally.',
+  icons: {
+    icon: '/favicon.png',
+  }
 };
 
 export const viewport: Viewport = {

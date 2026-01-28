@@ -119,20 +119,13 @@ export default function Home() {
           <DropdownMenu open={isDropDownMenuOpen} onOpenChange={setisDropDownMenuOpen}>
             <DropdownMenuTrigger className='flex font-[500] text-[16px] leading-[130%] items-center gap-[8px] cursor-pointer'>
               {wordsSort}
-              {
-                isDropDownMenuOpen ? <ChevronUp /> : <ChevronDown />
-              }
+              {isDropDownMenuOpen ? <ChevronUp /> : <ChevronDown />}
             </DropdownMenuTrigger>
-
             <DropdownMenuPortal>
-              <DropdownMenuContent className="border-[2px] border-solid border-black rounded-[8px] bg-white min-w-[92px] p-[12px]" sideOffset={5}>
+              <DropdownMenuContent className="absolute z-[5] left-[-50%] translate-x-[-50%] border-[2px] border-solid border-black rounded-[8px] bg-white min-w-[92px] p-[12px]" sideOffset={5}>
                 <DropdownMenuRadioGroup value={wordsSort} onValueChange={setWordsSort} className='flex flex-col gap-[12px]'>
-                  <DropdownMenuRadioItem value='Latest' className="font-[500] text-[16px] leading-[130%] opacity-[40%] data-[state=checked]:opacity-100 data-[highlighted]:opacity-100 cursor-pointer">
-                    Latest
-                  </DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem value='Earliest' className="font-[500] text-[16px] leading-[130%] opacity-[40%] data-[state=checked]:opacity-100 data-[highlighted]:opacity-100 cursor-pointer">
-                    Earliest
-                  </DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value='Latest' className="font-[500] text-[16px] leading-[130%] opacity-[40%] data-[state=checked]:opacity-100 data-[highlighted]:opacity-100 cursor-pointer">Latest</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value='Earliest' className="font-[500] text-[16px] leading-[130%] opacity-[40%] data-[state=checked]:opacity-100 data-[highlighted]:opacity-100 cursor-pointer">Earliest</DropdownMenuRadioItem>
                 </DropdownMenuRadioGroup>
               </DropdownMenuContent>
             </DropdownMenuPortal>
@@ -178,7 +171,7 @@ export default function Home() {
                   >
                     <SwiperSlide>
                       <div className='flex flex-col h-full'>
-                        <div className="flex gap-[20px] px-[14px] h-[49px] items-center border-b-[2px] border-solid border-black">
+                        <div className="flex flex-none gap-[20px] px-[14px] h-[49px] items-center border-b-[2px] border-solid border-black">
                           <div className="flex items-center flex-wrap justify-between flex-1">
                             <div className="flex flex-wrap gap-[4px]">
                               {word.hashtags.map((hashtag) => (
@@ -192,7 +185,7 @@ export default function Home() {
                             </div>
                           </div>
                         </div>
-                        <div className="h-[54.67vw] relative">
+                        <div className="aspect-[5/3] relative flex-none">
                           <Image
                             src={word.image_url}
                             alt={word.word}
@@ -200,25 +193,27 @@ export default function Home() {
                             className="h-full w-full object-cover"
                           />
                         </div>
-                        <div className="flex flex-col pt-[22px] border-t-[2px] border-solid border-black items-center justify-center flex-none h-[calc(100%-308px)] px-[22px] pb-[22px]">
-                          <button type='button' className='mb-[8px]'>
-                            <Speaker />
-                          </button>
-                          <p className="text-[26px] leading-[140%] font-[500] text-black">
-                            {word.word}
-                          </p>
-                          <p className="mt-[2px] text-[14px] leading-[100%] font-[500] text-[#999999]">
-                            {`[${word.pronunciation}]`}
-                          </p>
-                          <p className="mt-[16px] text-center text-[16px] leading-[130%] font-[200] text-[#444444]">
-                            {word.meaning}
-                          </p>
+                        <div className="border-t-[2px] border-solid border-black h-full">
+                          <div className='h-[calc(100%-56px)] flex flex-col justify-center items-center p-[24px]'>
+                            <button type='button' className='mb-[8px]'>
+                              <Speaker />
+                            </button>
+                            <p className="text-[26px] leading-[140%] font-[500] text-black">
+                              {word.word}
+                            </p>
+                            <p className="mt-[2px] text-[14px] leading-[100%] font-[500] text-[#999999]">
+                              {`[${word.pronunciation}]`}
+                            </p>
+                            <p className="mt-[16px] text-center text-[16px] leading-[130%] font-[200] text-[#444444]">
+                              {word.meaning}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </SwiperSlide>
                     <SwiperSlide>
                       <div className='flex flex-col h-full'>
-                        <div className='h-[120px] flex justify-center bg-[#F05C22] overflow-hidden items-start rounded-t-[6px] relative'>
+                        <div className='h-[120px] flex flex-none justify-center bg-[#F05C22] overflow-hidden items-start rounded-t-[6px] relative'>
                           <Image
                             src={gadget.src}
                             width={179}
