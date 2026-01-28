@@ -160,8 +160,7 @@ $fonts: (SCDream);
 .swiper-pagination {
   display: flex;
   justify-content: center;
-  position: static;
-  margin: 24px 0 20px;
+  bottom: 22px !important;
   gap: 6px;
 
   &-bullet {

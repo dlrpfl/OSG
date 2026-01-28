@@ -1,4 +1,5 @@
-import Share from './Share';
-import Save from './Save';
+import Speaker from "./Speaker";
+import ChevronDown from "./ChevronDown";
+import ChevronUp from "./ChevronUp";
 
-export { Share, Save };
+export { Speaker, ChevronDown, ChevronUp }
